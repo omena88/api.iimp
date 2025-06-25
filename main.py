@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 class UserData(BaseModel):
@@ -13,15 +15,19 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={"set_attributes": {"responseApi": False}},
+    )
+
 @app.post("/datos/")
 async def recibir_datos(data: UserData):
     """
-    Recibe los datos del usuario, los valida y devuelve un mensaje de confirmación.
+    Recibe los datos del usuario y devuelve la respuesta en el formato especificado.
     """
-    return {
-        "status": "success",
-        "message": f"Datos recibidos de {data.nombre_completo} con DNI: {data.dni}"
-    }
+    return {"set_attributes": {"responseApi": True}}
 
 @app.get("/")
 def health_check():
